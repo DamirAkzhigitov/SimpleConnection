@@ -1,7 +1,8 @@
-const fs = require("fs");
-const path = require("path");
+import * as fs from "fs";
+import fastify from "fastify";
+import fetch from "node-fetch";
 
-const fastify = require("fastify")({
+const fastifyAPP = fastify({
   logger: true,
 });
 
@@ -9,12 +10,7 @@ let initialState = null;
 
 const readJsonFromFile = async () => {
   try {
-    const data = await fs.readFileSync(
-      "/home/antitaxi/Projects/testFile.json",
-      "utf8"
-    );
-
-    console.log("dataL ", data);
+    const data = await fs.readFileSync("testFile.json", "utf8");
 
     if (data) {
       initialState = JSON.parse(data);
@@ -23,7 +19,6 @@ const readJsonFromFile = async () => {
         data: [],
       };
     }
-    console.log("initialState: ", initialState);
   } catch (e) {
     console.error("error readJsonFromFile");
   }
@@ -36,35 +31,56 @@ const writeDataToFile = async (data) => {
 
   initialState.data.push(data);
 
-  const append = await fs.writeFileSync(
-    "/home/antitaxi/Projects/testFile.json",
-    JSON.stringify(initialState)
-  );
+  await fs.writeFileSync("testFile.json", JSON.stringify(initialState));
 };
 
-// Declare a route
-fastify.get("/", function (request, reply) {
-  reply.send(initialState);
+fastifyAPP.get("/", function (request, reply) {
+  reply.send(initialState.data);
 });
 
-fastify.post("/", async function (request, reply) {
-  const { body } = request;
+fastifyAPP.get("/last", function (request, reply) {
+  const length = initialState.data.length;
 
-  console.log("body: ", body);
+  reply.send({ data: initialState.data[length - 1] });
+});
+
+fastifyAPP.post("/", async function (request, reply) {
+  const { body } = request;
 
   await writeDataToFile(JSON.parse(body));
 
-  reply.send({ result: true });
+  reply.send({ result: true, body: initialState.data });
 });
 
 // Run the server!
-fastify.listen(3000, function (err, address) {
+fastifyAPP.listen(3000, function (err, address) {
+  console.log(`Running on http://localhost:3000`);
   if (err) {
-    fastify.log.error(err);
+    fastifyAPP.log.error(err);
     process.exit(1);
   }
 });
-fs.open("/home/antitaxi/Projects/testFile.json", "w", (err) => {
+fs.open("testFile.json", "w", (err) => {
   if (err) throw err;
   console.log("File created");
 });
+
+let counter = 0;
+
+const dataFromSite = async () => {
+  try {
+    const response = await fetch(
+      "https://www.public.cy/public/v1/mm/productPage?sku=1605699&locale=el"
+    );
+    return await response.json();
+  } catch (e) {
+    return null;
+  }
+};
+
+setInterval(async () => {
+  const data = await dataFromSite();
+  counter++;
+  // const test = [counter, Math.random()]
+  await writeDataToFile(data);
+}, 6000);
