@@ -1,62 +1,55 @@
 import * as fs from 'fs';
 import fastify from 'fastify';
 import fetch from 'node-fetch';
+import { getLastState, changeState, pushToState } from './state';
 
 const fastifyAPP = fastify({
   logger: true,
 });
 
-let initialState: { data: number[] } = {
-  data: [],
-};
-
 const readJsonFromFile = async () => {
   try {
     const data = await fs.readFileSync('testFile.json', 'utf8');
 
-    if (data) initialState = JSON.parse(data);
+    if (data) changeState(JSON.parse(data));
   } catch (e) {
     console.error('error readJsonFromFile');
   }
 };
 
 const writeDataToFile = async (data: number) => {
-  if (!initialState) {
+  if (!getLastState()) {
     await readJsonFromFile();
   }
 
-  initialState.data.push(data);
+  pushToState(data);
 
-  await fs.writeFileSync('testFile.json', JSON.stringify(initialState));
+  await fs.writeFileSync('testFile.json', JSON.stringify(getLastState()));
 };
 
 fastifyAPP.get('/', function (request, reply) {
-  reply.send(initialState.data);
-});
+  const lastState = getLastState();
 
-fastifyAPP.get('/last', function (request, reply) {
-  const length = initialState.data.length;
-
-  reply.send({ data: initialState.data[length - 1] });
+  reply.send(lastState.data);
 });
 
 fastifyAPP.post('/', async function (request, reply) {
   const { body } = request;
 
+  console.log('body: ', body);
+
   await writeDataToFile(JSON.parse(body as string));
 
-  reply.send({ result: true, body: initialState.data });
-});
+  const lastState = getLastState();
 
-fastifyAPP.get('/date-for-site', async (request, reply) => {
-  const data = await dataFromSite();
+  console.log('lastState: ', lastState);
 
-  reply.send({ data: data });
+  reply.send({ result: true, body: lastState.data });
 });
 
 // Run the server!
-fastifyAPP.listen(3000, function (err, address) {
-  console.log(`Running on http://localhost:3000`);
+fastifyAPP.listen(8080, function (err, address) {
+  console.log(`Running on http://localhost:8080`);
   if (err) {
     fastifyAPP.log.error(err);
     process.exit(1);
@@ -66,18 +59,6 @@ fs.open('testFile.json', 'w', (err) => {
   if (err) throw err;
   console.log('File created');
 });
-
-let counter = 0;
-
-const dataFromSite = async () => {
-  try {
-    const response = await fetch('https://www.public.cy/public/v1/mm/productPage?sku=1605699&locale=el');
-    return await response.json();
-  } catch (e) {
-    console.error('error: ', e);
-    return null;
-  }
-};
 
 // setInterval(async () => {
 //   const data = await dataFromSite();
