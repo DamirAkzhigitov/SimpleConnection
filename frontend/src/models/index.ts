@@ -1,1 +1,2 @@
-export * from "./SimpleStore";
+export * from './SimpleStore';
+export * from './Api';

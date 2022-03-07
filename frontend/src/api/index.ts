@@ -1,6 +1,7 @@
 import { BASE_API } from '../constants';
+import { SendRequestItem } from '../models';
 
-export const sendRequest = async <Type>(url = '/', method = 'get', data = ''): Promise<Type | null> => {
+export const sendRequest: SendRequestItem = async (url, method, data = '') => {
   try {
     const response = await fetch(`${BASE_API}${url}`, {
       method,
@@ -18,7 +19,3 @@ export const sendRequest = async <Type>(url = '/', method = 'get', data = ''): P
     return null;
   }
 };
-
-console.log('work!');
-console.log('work!');
-console.log('work!');
