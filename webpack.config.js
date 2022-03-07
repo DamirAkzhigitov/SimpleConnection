@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/client.ts',
+  entry: './frontend/client.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle-[hash].js',
@@ -57,7 +57,7 @@ module.exports = {
     //   ],
     // }),
     new HtmlWebpackPlugin({
-      template: 'src/index.html',
+      template: './frontend/src/index.html',
       filename: 'index.html',
       minify: {
         collapseWhitespace: true,
