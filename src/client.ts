@@ -1,30 +1,47 @@
-const selectors = {
+const SELECTOR = {
   writeBtn: "write_file_btn",
   readBtn: "read_file_btn",
   input: "input_field",
 };
 
-const writeButton = document.getElementsByClassName(selectors.writeBtn)[0];
-const readButton = document.getElementsByClassName(selectors.readBtn)[0];
-const inputField = document.getElementsByClassName(selectors.input)[0];
+const BASE_API = "http://localhost:3000";
 
-const templateItem = (innerHTML, className = null) => {
+interface StoreItem {
+  data: {
+    prices: {
+      salePrice: string;
+      skuId: string;
+    }[];
+  };
+}
+const writeButton = document.getElementsByClassName(SELECTOR.writeBtn)[0];
+const readButton = document.getElementsByClassName(SELECTOR.readBtn)[0];
+const inputField = document.getElementsByClassName(
+  SELECTOR.input
+)[0] as HTMLInputElement;
+
+const templateItem = (innerHTML: string, className = "") => {
   if (!innerHTML) return null;
 
   const element = document.createElement("div");
 
   element.innerHTML = innerHTML;
-  element.className = className;
+  if (className) element.className = className;
 
   return element;
 };
 
-const insertResultIntoContainer = (result, attributes = null) => {
+const insertResultIntoContainer = (
+  result: string | string[] | Record<string, string>,
+  attributes = ""
+) => {
   if (!result) {
     return console.error("dont have result");
   }
 
   const container = document.querySelector(".container");
+  if (!container) return;
+
   const element = templateItem(JSON.stringify(result), attributes);
 
   if (!element) return;
@@ -32,9 +49,13 @@ const insertResultIntoContainer = (result, attributes = null) => {
   container.insertAdjacentElement("afterbegin", element);
 };
 
-const sendRequest = async (url = "/", method = "get", data = null) => {
+const sendRequest = async <Type>(
+  url = "/",
+  method = "get",
+  data = ""
+): Promise<Type | null> => {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${BASE_API}${url}`, {
       method,
       body: method === "get" ? null : JSON.stringify(data),
     });
@@ -51,11 +72,7 @@ if (writeButton) {
   writeButton.addEventListener("click", async () => {
     const inputValue = inputField.value;
 
-    const response = await sendRequest(
-      "http://localhost:3000/",
-      "post",
-      inputValue
-    );
+    const response = await sendRequest<string[]>("/", "post", inputValue);
 
     if (response) insertResultIntoContainer(response);
   });
@@ -63,16 +80,22 @@ if (writeButton) {
 
 if (readButton) {
   readButton.addEventListener("click", async () => {
-    const response = await sendRequest("http://localhost:3000/");
-
-    if (response) insertResultIntoContainer(response);
+    // const response = await sendRequest("/date-for-site");
+    //
+    // if (response) insertResultIntoContainer(response);
   });
 }
 
 let lastResult = null;
 
 setInterval(async () => {
-  const response = await sendRequest("http://localhost:3000/last");
+  const response = await sendRequest<StoreItem>("/last");
+
+  if (!response) {
+    console.log("empty result");
+
+    return;
+  }
 
   console.log(response);
   // const [counter, result] = response.data;
