@@ -52,6 +52,12 @@ fastifyAPP.post("/", async function (request, reply) {
   reply.send({ result: true, body: initialState.data });
 });
 
+fastifyAPP.get("/date-for-site", async (request, reply) => {
+  const data = await dataFromSite();
+
+  reply.send({ data: data });
+});
+
 // Run the server!
 fastifyAPP.listen(3000, function (err, address) {
   console.log(`Running on http://localhost:3000`);
@@ -74,13 +80,14 @@ const dataFromSite = async () => {
     );
     return await response.json();
   } catch (e) {
+    console.error("error: ", e);
     return null;
   }
 };
 
-setInterval(async () => {
-  const data = await dataFromSite();
-  counter++;
-  // const test = [counter, Math.random()]
-  await writeDataToFile(data);
-}, 6000);
+// setInterval(async () => {
+//   const data = await dataFromSite();
+//   counter++;
+//   // const test = [counter, Math.random()]
+//   await writeDataToFile(data);
+// }, 6000);
