@@ -1,58 +1,54 @@
-import * as fs from "fs";
-import fastify from "fastify";
-import fetch from "node-fetch";
+import * as fs from 'fs';
+import fastify from 'fastify';
+import fetch from 'node-fetch';
 
 const fastifyAPP = fastify({
   logger: true,
 });
 
-let initialState = null;
+let initialState: { data: number[] } = {
+  data: [],
+};
 
 const readJsonFromFile = async () => {
   try {
-    const data = await fs.readFileSync("testFile.json", "utf8");
+    const data = await fs.readFileSync('testFile.json', 'utf8');
 
-    if (data) {
-      initialState = JSON.parse(data);
-    } else {
-      initialState = {
-        data: [],
-      };
-    }
+    if (data) initialState = JSON.parse(data);
   } catch (e) {
-    console.error("error readJsonFromFile");
+    console.error('error readJsonFromFile');
   }
 };
 
-const writeDataToFile = async (data) => {
+const writeDataToFile = async (data: number) => {
   if (!initialState) {
     await readJsonFromFile();
   }
 
   initialState.data.push(data);
 
-  await fs.writeFileSync("testFile.json", JSON.stringify(initialState));
+  await fs.writeFileSync('testFile.json', JSON.stringify(initialState));
 };
 
-fastifyAPP.get("/", function (request, reply) {
+fastifyAPP.get('/', function (request, reply) {
   reply.send(initialState.data);
 });
 
-fastifyAPP.get("/last", function (request, reply) {
+fastifyAPP.get('/last', function (request, reply) {
   const length = initialState.data.length;
 
   reply.send({ data: initialState.data[length - 1] });
 });
 
-fastifyAPP.post("/", async function (request, reply) {
+fastifyAPP.post('/', async function (request, reply) {
   const { body } = request;
 
-  await writeDataToFile(JSON.parse(body));
+  await writeDataToFile(JSON.parse(body as string));
 
   reply.send({ result: true, body: initialState.data });
 });
 
-fastifyAPP.get("/date-for-site", async (request, reply) => {
+fastifyAPP.get('/date-for-site', async (request, reply) => {
   const data = await dataFromSite();
 
   reply.send({ data: data });
@@ -66,21 +62,19 @@ fastifyAPP.listen(3000, function (err, address) {
     process.exit(1);
   }
 });
-fs.open("testFile.json", "w", (err) => {
+fs.open('testFile.json', 'w', (err) => {
   if (err) throw err;
-  console.log("File created");
+  console.log('File created');
 });
 
 let counter = 0;
 
 const dataFromSite = async () => {
   try {
-    const response = await fetch(
-      "https://www.public.cy/public/v1/mm/productPage?sku=1605699&locale=el"
-    );
+    const response = await fetch('https://www.public.cy/public/v1/mm/productPage?sku=1605699&locale=el');
     return await response.json();
   } catch (e) {
-    console.error("error: ", e);
+    console.error('error: ', e);
     return null;
   }
 };

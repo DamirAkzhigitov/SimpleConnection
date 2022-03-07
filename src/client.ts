@@ -1,19 +1,12 @@
+import { sendRequest } from "./api";
+import { StoreItem } from "./models";
+
 const SELECTOR = {
   writeBtn: "write_file_btn",
   readBtn: "read_file_btn",
   input: "input_field",
 };
 
-const BASE_API = "http://localhost:3000";
-
-interface StoreItem {
-  data: {
-    prices: {
-      salePrice: string;
-      skuId: string;
-    }[];
-  };
-}
 const writeButton = document.getElementsByClassName(SELECTOR.writeBtn)[0];
 const readButton = document.getElementsByClassName(SELECTOR.readBtn)[0];
 const inputField = document.getElementsByClassName(
@@ -47,25 +40,6 @@ const insertResultIntoContainer = (
   if (!element) return;
 
   container.insertAdjacentElement("afterbegin", element);
-};
-
-const sendRequest = async <Type>(
-  url = "/",
-  method = "get",
-  data = ""
-): Promise<Type | null> => {
-  try {
-    const response = await fetch(`${BASE_API}${url}`, {
-      method,
-      body: method === "get" ? null : JSON.stringify(data),
-    });
-
-    return await response.json();
-  } catch (e) {
-    console.error(e);
-
-    return null;
-  }
 };
 
 if (writeButton) {
